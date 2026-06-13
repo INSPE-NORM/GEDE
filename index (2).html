@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>GEDE — Processos</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600&family=Source+Sans+3:wght@300;400;600&display=swap');
+  :root{--gold:#c9a84c;--bg:#0b1120;--surface:#151f35;--surface2:#1a2744;--border:#1e2e4a;--text:#dce6f5;--muted:#5a7299;--green:#10b981;--blue:#3b82f6;--red:#ef4444;--amber:#f59e0b}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--bg);color:var(--text);font-family:'Source Sans 3',sans-serif;font-size:14px;min-height:100vh}
+  header{background:linear-gradient(135deg,#0d1e40,var(--bg));border-bottom:1px solid var(--gold);padding:14px 16px;position:sticky;top:0;z-index:50;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+  .header-title{font-family:'Cinzel',serif;font-size:16px;color:var(--gold)}
+  .header-sub{font-size:10px;color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin-bottom:2px}
+  .header-actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+  .btn{border:none;border-radius:6px;cursor:pointer;font-family:inherit;font-size:13px;padding:8px 14px;transition:opacity .2s}
+  .btn:active{transform:scale(.97)}
+  .btn-gold{background:var(--gold);color:#0b1120;font-weight:600}
+  .btn-outline{background:transparent;border:1px solid var(--gold);color:var(--gold)}
+  .btn-sm{padding:4px 10px;font-size:12px;border-radius:4px;border:none;cursor:pointer;font-family:inherit;margin-right:4px}
+  .search-wrap{display:flex;align-items:center;gap:6px;background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:7px 12px;min-width:140px}
+  .search-wrap input{background:none;border:none;outline:none;color:var(--text);font-family:inherit;font-size:13px;width:100%}
+  .filter-bar{background:var(--surface);border-bottom:1px solid var(--border);padding:8px 16px;display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+  .filter-chip{background:var(--surface2);border:1px solid var(--border);border-radius:20px;padding:4px 12px;font-size:11px;color:var(--muted);cursor:pointer;font-family:inherit;transition:all .15s}
+  .filter-chip.active{background:#c9a84c22;border-color:var(--gold);color:var(--gold)}
+  .stats{background:var(--surface);border-bottom:1px solid var(--border);padding:8px 16px;display:flex;gap:16px;font-size:12px;color:var(--muted);flex-wrap:wrap;align-items:center}
+  .stats strong{color:var(--text)}
+  .list-wrap{padding:12px 16px}
+  .card{background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--gold);border-radius:8px;padding:14px;margin-bottom:10px}
+  .card-title{font-family:'Cinzel',serif;font-size:13px;color:var(--gold);margin-bottom:8px}
+  .card-row{display:flex;gap:8px;margin-bottom:5px;font-size:13px}
+  .card-label{color:var(--muted);min-width:90px;flex-shrink:0}
+  .card-actions{margin-top:12px;display:flex;gap:8px;flex-wrap:wrap}
+  .tbl-wrap{overflow-x:auto}
+  table{width:100%;border-collapse:collapse;min-width:820px}
+  thead tr{border-bottom:2px solid var(--gold)}
+  th{padding:10px 12px;color:var(--gold);font-family:'Cinzel',serif;font-size:10px;font-weight:400;letter-spacing:1px;text-transform:uppercase;cursor:pointer;user-select:none;white-space:nowrap}
+  tbody tr{border-bottom:1px solid var(--border);transition:background .15s}
+  tbody tr:hover{background:#1a2e5522}
+  td{padding:10px 12px;vertical-align:middle}
+  .td-clip{max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .badge{display:inline-block;padding:3px 8px;border-radius:4px;font-size:11px;white-space:nowrap}
+  .aba-tag{display:inline-block;padding:2px 7px;border-radius:10px;font-size:10px;background:#3b82f622;color:#3b82f6;border:1px solid #3b82f644;margin-left:4px}
+  .modal-bg{position:fixed;inset:0;background:#000000aa;z-index:100;display:flex;align-items:center;justify-content:center;padding:16px}
+  .modal{background:var(--surface);border:1px solid var(--border);border-top:2px solid var(--gold);border-radius:10px;padding:22px;width:100%;max-width:560px;max-height:92vh;overflow-y:auto}
+  .modal h2{font-family:'Cinzel',serif;font-size:16px;font-weight:400;color:var(--gold);margin-bottom:18px}
+  .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px}
+  @media(max-width:480px){.form-grid{grid-template-columns:1fr}}
+  .form-field{margin-bottom:12px}
+  .form-field label{display:block;font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:5px}
+  .form-field input,.form-field select,.form-field textarea{width:100%;background:var(--bg);border:1px solid var(--border);border-radius:5px;padding:8px 12px;color:var(--text);font-family:inherit;font-size:13px;outline:none;transition:border-color .2s}
+  .form-field input:focus,.form-field select:focus,.form-field textarea:focus{border-color:var(--gold)}
+  .form-field textarea{resize:vertical;min-height:60px}
+  .form-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:16px;flex-wrap:wrap}
+  .chip{background:var(--surface2);border:1px solid var(--border);border-radius:20px;padding:4px 12px;font-size:11px;color:var(--muted);cursor:pointer;font-family:inherit;transition:all .15s}
+  .chip:hover,.chip.active{background:#c9a84c22;border-color:var(--gold);color:var(--gold)}
+  .detail-row{display:flex;gap:12px;margin-bottom:10px}
+  .detail-label{min-width:130px;font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;padding-top:2px;flex-shrink:0}
+  #scanner-overlay{position:fixed;inset:0;background:#000;z-index:200;display:none;flex-direction:column}
+  #scanner-overlay.active{display:flex}
+  .scanner-bar{background:var(--bg);border-bottom:1px solid var(--gold);padding:12px 16px;display:flex;align-items:center;justify-content:space-between}
+  .scanner-bar span{font-family:'Cinzel',serif;color:var(--gold);font-size:14px}
+  .scanner-body{flex:1;position:relative;display:flex;align-items:center;justify-content:center;overflow:hidden}
+  #video{width:100%;max-height:calc(100vh - 160px);object-fit:cover}
+  .scan-frame{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:82%;height:68%;border:2px solid var(--gold);border-radius:4px;box-shadow:0 0 0 9999px rgba(0,0,0,.5);pointer-events:none}
+  .sc{position:absolute;width:22px;height:22px}
+  .sc.tl{top:-1px;left:-1px;border-top:3px solid var(--gold);border-left:3px solid var(--gold)}
+  .sc.tr{top:-1px;right:-1px;border-top:3px solid var(--gold);border-right:3px solid var(--gold)}
+  .sc.bl{bottom:-1px;left:-1px;border-bottom:3px solid var(--gold);border-left:3px solid var(--gold)}
+  .sc.br{bottom:-1px;right:-1px;border-bottom:3px solid var(--gold);border-right:3px solid var(--gold)}
+  .scan-hint{position:absolute;bottom:-30px;left:0;right:0;text-align:center;color:var(--gold);font-size:10px;letter-spacing:2px;text-transform:uppercase}
+  .scanner-controls{position:absolute;bottom:0;left:0;right:0;background:linear-gradient(transparent,#000c);padding:20px;display:flex;justify-content:center;align-items:center;gap:28px}
+  .btn-shutter{width:68px;height:68px;border-radius:50%;background:var(--gold);border:none;font-size:26px;cursor:pointer;box-shadow:0 0 0 4px #c9a84c33}
+  .btn-flip{width:46px;height:46px;border-radius:50%;background:#1e293b99;border:1px solid var(--border);font-size:18px;cursor:pointer;color:var(--muted)}
+  .prev-body{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px;gap:16px}
+  #preview-img{max-width:100%;max-height:62vh;border-radius:8px;border:1px solid var(--border);object-fit:contain}
+  #canvas{display:none}
+  .desktop-only{display:table}
+  .mobile-only{display:none}
+  @media(max-width:680px){.desktop-only{display:none!important}.mobile-only{display:block}.list-wrap{padding:10px}}
+  #toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--surface2);border:1px solid var(--gold);border-radius:8px;padding:10px 20px;font-size:13px;z-index:999;transition:transform .3s;white-space:nowrap}
+  #toast.show{transform:translateX(-50%) translateY(0)}
+  #sync-bar{padding:6px 16px;font-size:11px;text-align:center;display:none}
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <div class="header-sub">Gerência de Estrutura e Dinâmica Escolar</div>
+    <div class="header-title">GEDE — Processos</div>
+  </div>
+  <div class="header-actions">
+    <div class="search-wrap">
+      <span style="color:var(--muted)">🔍</span>
+      <input type="text" id="search" placeholder="Pesquisar…" oninput="renderList()">
+    </div>
+    <button class="btn btn-outline" onclick="openScanner('new')">📷</button>
+    <button class="btn btn-gold" onclick="openForm()">+ Novo</button>
+  </div>
+</header>
+
+<div id="sync-bar"></div>
+
+<div class="filter-bar">
+  <span style="font-size:11px;color:var(--muted);margin-right:4px">ABA:</span>
+  <button class="filter-chip active" onclick="setAba('')" id="aba-all">Todas</button>
+  <button class="filter-chip" onclick="setAba('2022')" id="aba-2022">2022</button>
+  <button class="filter-chip" onclick="setAba('FLUXO')" id="aba-fluxo">Fluxo Entrada/Saída</button>
+</div>
+
+<div class="stats">
+  <span>Total: <strong id="stat-total">0</strong></span>
+  <span>Exibindo: <strong id="stat-vis">0</strong></span>
+  <span>Escaneados: <strong id="stat-scan" style="color:var(--gold)">0</strong></span>
+  <span style="margin-left:auto;font-size:11px;color:var(--green)" id="sync-ok" style="display:none">✓ Firebase</span>
+</div>
+
+<div class="list-wrap">
+  <div class="tbl-wrap desktop-only">
+    <table>
+      <thead><tr>
+        <th onclick="sort('data')">Data <span id="s-data"></span></th>
+        <th onclick="sort('documento')">Documento</th>
+        <th onclick="sort('numeroProcesso')">Nº Processo</th>
+        <th onclick="sort('emissor')">Emissor</th>
+        <th onclick="sort('assunto')">Assunto</th>
+        <th onclick="sort('responsavel')">Responsável</th>
+        <th onclick="sort('situacao')">Situação</th>
+        <th>Ações</th>
+      </tr></thead>
+      <tbody id="tbody"></tbody>
+    </table>
+  </div>
+  <div class="mobile-only" id="cards"></div>
+</div>
+<div id="empty" style="display:none;text-align:center;padding:50px;color:var(--muted);font-style:italic">Nenhum processo encontrado.</div>
+
+<!-- Form Modal -->
+<div class="modal-bg" id="modal-form" style="display:none" onclick="if(event.target===this)closeForm()">
+  <div class="modal">
+    <h2 id="modal-title">Novo Processo</h2>
+    <div id="scan-badge" style="display:none;margin-bottom:14px;background:#10b98111;border:1px solid #10b98133;border-radius:6px;padding:10px 14px;align-items:center;gap:10px">
+      <img id="scan-thumb" style="width:44px;height:52px;object-fit:cover;border-radius:4px">
+      <span style="color:var(--green);font-size:13px">✅ Documento escaneado anexado</span>
+    </div>
+    <div class="form-grid">
+      <div class="form-field"><label>Data</label><input type="text" id="f-data" placeholder="DD/MM/AAAA"></div>
+      <div class="form-field"><label>Documento</label><input type="text" id="f-documento" placeholder="Ex: C.I 61/2022"></div>
+      <div class="form-field"><label>Nº do Processo</label><input type="text" id="f-numeroProcesso"></div>
+      <div class="form-field"><label>Responsável</label><input type="text" id="f-responsavel"></div>
+    </div>
+    <div class="form-field"><label>Emissor / Requerente</label><input type="text" id="f-emissor"></div>
+    <div class="form-field"><label>Assunto *</label><textarea id="f-assunto" rows="2"></textarea></div>
+    <div class="form-field">
+      <label>Aba / Categoria</label>
+      <select id="f-aba">
+        <option value="2022">2022</option>
+        <option value="FLUXO">Fluxo Entrada/Saída</option>
+        <option value="OUTRO">Outro</option>
+      </select>
+    </div>
+    <div class="form-field">
+      <label>Situação</label>
+      <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px">
+        <button type="button" class="chip" onclick="setChip('EM ANÁLISE')">EM ANÁLISE</button>
+        <button type="button" class="chip" onclick="setChip('PENDENTE')">PENDENTE</button>
+        <button type="button" class="chip" onclick="setChip('CONCLUÍDO')">CONCLUÍDO</button>
+        <button type="button" class="chip" onclick="setChip('ARQUIVADO')">ARQUIVADO</button>
+        <button type="button" class="chip" onclick="setChip('EM ANDAMENTO')">EM ANDAMENTO</button>
+      </div>
+      <input type="text" id="f-situacao" placeholder="Selecione acima ou digite…">
+    </div>
+    <div class="form-actions">
+      <button class="btn btn-gold" onclick="saveForm()">Salvar</button>
+      <button class="btn btn-outline" onclick="closeForm()">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<!-- View Modal -->
+<div class="modal-bg" id="modal-view" style="display:none" onclick="if(event.target===this)closeView()">
+  <div class="modal">
+    <h2>Detalhes do Processo</h2>
+    <div id="view-content"></div>
+    <div class="form-actions" id="view-actions"></div>
+  </div>
+</div>
+
+<!-- Scanner -->
+<div id="scanner-overlay">
+  <div class="scanner-bar">
+    <span>📷 Escanear Documento</span>
+    <button onclick="closeScanner()" style="background:none;border:none;color:var(--muted);font-size:20px;cursor:pointer">✕</button>
+  </div>
+  <div class="scanner-body">
+    <div id="cam-phase" style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;position:relative">
+      <video id="video" autoplay playsinline muted></video>
+      <div class="scan-frame">
+        <div class="sc tl"></div><div class="sc tr"></div>
+        <div class="sc bl"></div><div class="sc br"></div>
+        <div class="scan-hint">Posicione o documento dentro da moldura</div>
+      </div>
+      <div class="scanner-controls">
+        <button class="btn-flip" onclick="flipCam()">🔄</button>
+        <button class="btn-shutter" onclick="capturePhoto()">📸</button>
+        <div style="width:46px"></div>
+      </div>
+      <div id="cam-error" style="display:none;position:absolute;background:var(--surface);border-radius:8px;padding:28px;text-align:center;max-width:280px">
+        <div style="font-size:32px;margin-bottom:12px">📷</div>
+        <div style="color:var(--muted);font-size:13px;margin-bottom:16px">Câmera não disponível.<br>Escolha uma foto da galeria.</div>
+        <label class="btn btn-gold" style="cursor:pointer">🖼 Escolher foto<input type="file" accept="image/*" id="file-input" style="display:none" onchange="handleFile(event)"></label>
+      </div>
+    </div>
+    <div id="prev-phase" style="display:none" class="prev-body">
+      <img id="preview-img" src="" alt="">
+      <p style="color:var(--muted);font-size:13px">A imagem ficou boa?</p>
+      <div style="display:flex;gap:14px">
+        <button class="btn btn-outline" onclick="retake()">🔁 Retirar</button>
+        <button class="btn btn-gold" onclick="confirmScan()">✔ Confirmar</button>
+      </div>
+    </div>
+  </div>
+  <canvas id="canvas"></canvas>
+</div>
+
+<div id="toast"></div>
+
+<script>
+const FIREBASE_URL = 'https://gede-e4af3-default-rtdb.firebaseio.com';
+const KEY = 'gede_v4';
+const DADOS_INICIAIS = [{"id": 1, "aba": "2022", "data": "1995-12-13", "documento": "C.I 61/2022", "numeroProcesso": "C.I 61", "emissor": "GERÊNCIA DE INSPEÇÃO ESCOLAR", "assunto": "RELATÓRIO SOBRE O PROFESSOR WASHINGTON COSTA VIEIRA", "responsavel": "ANA KARINA", "situacao": "ENCAMINHADO ATRÁVES DE C.I PARA A GER. DE PESSOAL", "scanUrl": null}, {"id": 2, "aba": "FLUXO", "data": "2022-06-16", "documento": "OFICIO Nº52/2022", "numeroProcesso": "", "emissor": "GRUPO ESCOLAR FREI GUIDO", "assunto": "MONITORAMENTO DO INTERVALO DOS ALUNOS", "responsavel": "FRANCISCA ROSELANE", "situacao": "ARQUIVADO", "scanUrl": null}, {"id": 3, "aba": "FLUXO", "data": "2022-06-16", "documento": "REQUERIMENTO/OFÍCIO Nº135/2022", "numeroProcesso": "", "emissor": "ESC. MUN. MARCÍLIO DIAS", "assunto": "RELATÓRIA DA PROFª RITA DE CASTRO", "responsavel": "LONGSTEIN SOUTO", "situacao": "ARQUIVADO", "scanUrl": null}, {"id": 4, "aba": "FLUXO", "data": "2022-08-11", "documento": "OFÍCIO Nº075/2022", "numeroProcesso": "", "emissor": "ESC. MUN. GOV. MIGUEL ARRAES DE ALENCAR", "assunto": "RELATÓRIO", "responsavel": "LONGSTEIN SOUTO", "situacao": "EM ANDAMENTO NO SETOR", "scanUrl": null}, {"id": 5, "aba": "FLUXO", "data": "2022-06-21", "documento": "OFÍCIO Nº63/2022", "numeroProcesso": "", "emissor": "ESC. MUN. EDNA MARINHO", "assunto": "ACOMPANHAMENTO ESCOLAR DE CONRADO MIGUEL", "responsavel": "GERENTE GEORGE VIEIRA", "situacao": "ARQUIVADO", "scanUrl": null}, {"id": 6, "aba": "FLUXO", "data": "2022-07-20", "documento": "OFÍCIO Nº75/2022", "numeroProcesso": "", "emissor": "ESC. MUN. IMPERATRIZ MARIA LEOPOLDINA", "assunto": "LOGÍSTICA DE VOLTA AS AULAS PRESENCIAIS 2º SEMESTRE", "responsavel": "GERENTE GEORGE VIEIRA", "situacao": "ARQUIVADO", "scanUrl": null}, {"id": 7, "aba": "FLUXO", "data": "2022-05-13", "documento": "OFÍCIO Nº78/2022", "numeroProcesso": "", "emissor": "ESC. MUN. PROFª TEREZINHA CAMAROTTI", "assunto": "SUSPENSÃO DAS AULAS", "responsavel": "GERÊNCIA DE NORMATIZAÇÃO E INSPEÇÃO ESCOLAR", "situacao": "ARQUIVADO", "scanUrl": null}, {"id": 8, "aba": "FLUXO", "data": "2022-08-01", "documento": "REQUERIMENTO GER. GESTÃO DE PESSOAS", "numeroProcesso": "", "emissor": "ESC. MUN. JOÃO FONSECA DE ALBUQUERQUE", "assunto": "MUDANÇA DE FUNÇÃO", "responsavel": "GERENTE GEORGE VIEIRA", "situacao": "ARQUIVADO", "scanUrl": null}, {"id": 9, "aba": "FLUXO", "data": "2022-08-11", "documento": "OFÍCIO Nº093/2022", "numeroProcesso": "", "emissor": "ESC. MUN. GOV. CARLOS WILSON CAMPOS", "assunto": "SOLICITAÇÃO DE PROFº DE MATEMÁTICA", "responsavel": "GERENTE GEORGE VIEIRA", "situacao": "ARQUIVADO", "scanUrl": null}, {"id": 10, "aba": "FLUXO", "data": "2022-08-11", "documento": "OFÍCIO Nº092/2022", "numeroProcesso": "", "emissor": "ESC. MUN. GOV. CARLOS WILSON CAMPOS", "assunto": "SOLICITAÇÃO DE PROFº DE EDUCAÇÃO FÍSICA", "responsavel": "GERENTE GEORGE VIEIRA", "situacao": "ARQUIVADO", "scanUrl": null}, {"id": 11, "aba": "FLUXO", "data": "2022-08-29", "documento": "OFÍCIO Nº 01/2022", "numeroProcesso": "", "emissor": "ESC. MUN. JOÃO FONSECA    ", "assunto": "NÃO RECEBIMENTO DAS ATIVIDADES", "responsavel": "LONGSTEIN SOUTO", "situacao": "EM ANDAMENTO NO SETOR", "scanUrl": null}, {"id": 12, "aba": "FLUXO", "data": "2022-08-30", "documento": "OFÍCIO Nº 10/2022", "numeroProcesso": "", "emissor": "ESC. PAROQUIAL NOSSA SENHORA DE FÁTIMA", "assunto": "REGIMENTO ESCOLAR E PROPOSTA PEDÁGOGICA", "responsavel": "CLAUDIO SANTOS", "situacao": "EM ANDAMENTO NO SETOR", "scanUrl": null}, {"id": 13, "aba": "FLUXO", "data": "2022-08-03", "documento": "OFÍCIO N° 43/2022", "numeroProcesso": "", "emissor": "ESC. MUN. AGAMENON MAGALHÃES", "assunto": "RETIFICAÇÃO DE ATA DE RESULTADOS FINAIS 2021", "responsavel": "LONGSTEIN SOUTO", "situacao": "EM ANDAMENTO NO SETOR", "scanUrl": null}, {"id": 14, "aba": "FLUXO", "data": "2022-08-15", "documento": "OFÍCIO N° 162/2022", "numeroProcesso": "", "emissor": "ESC. MUN. MARCÍLIO DIAS", "assunto": "SUSPENSÃO DAS AULAS TURNO MANHÃ", "responsavel": "LONGSTEIN SOUTO", "situacao": "ARQUIVADO", "scanUrl": null}, {"id": 15, "aba": "FLUXO", "data": "2022-08-09", "documento": "OFÍCIO N° 82/2022", "numeroProcesso": "", "emissor": "ESC. MUN. MINISTRO MARCOS FREIRE", "assunto": "VISITA TÉCNICA-INSPETOR", "responsavel": "FERNANDO BARBOSA", "situacao": "EM ANDAMENTO NO SETOR", "scanUrl": null}, {"id": 16, "aba": "FLUXO", "data": "2022-08-25", "documento": "OFÍCIO N° 082/2022", "numeroProcesso": "", "emissor": "ESC.MUN.GOVERNADOR CARLOS WILSON CAMPOS", "assunto": "SOLICITAÇÃO DE DIVISÃO DE TURMA", "responsavel": "LONGSTEIN SOUTO", "situacao": "ARQUIVADO", "scanUrl": null}, {"id": 17, "aba": "FLUXO", "data": "2022-09-01", "documento": "CI N° 11/2022 PARA A GERÊNCIA PEDAGÓGICA", "numeroProcesso": "", "emissor": "SECRETARIA EXECUTIVA", "assunto": "ANÁLISE PARA EXECUÇÃO DAS AULAS ATIVIDADES ED. INFANTIL", "responsavel": "GERENTE GEORGE VIEIRA", "situacao": "ARQUIVADO", "scanUrl": null}, {"id": 18, "aba": "FLUXO", "data": "2022-09-01", "documento": "OFÍCIO N°93/2022", "numeroProcesso": "", "emissor": "SECRETARIA DE EDUCAÇÃO E ESPORTES/FLAVIANA AMÉRICA", "assunto": "VERIFICAÇÃO DE CREDENCIAMENTO  E FUNCIONAMENTO DE ESCOLAS", "responsavel": "GERENTE GEORGE VIEIRA", "situacao": "ARQUIVADO", "scanUrl": null}, {"id": 19, "aba": "FLUXO", "data": "2022-09-01", "documento": "FLUXO DE PROCESSOS", "numeroProcesso": "", "emissor": "GERENTE GEORGE VIEIRA", "assunto": "ORIENTAÇÕES SOBRE FLUXO DE PROCESSOS", "responsavel": "GERENTE GEORGE VIEIRA", "situacao": "ARQUIVADO", "scanUrl": null}, {"id": 20, "aba": "FLUXO", "data": "2022-09-01", "documento": "OFÍCIO N°42/2022", "numeroProcesso": "", "emissor": "SECRETARIA DE EDUCAÇÃO", "assunto": "18° CONGRESSO INTERNACIONAL DE TECNOLOGIA NA EDUCAÇÃO", "responsavel": "GERENTE GEORGE VIEIRA", "situacao": "ARQUIVADO", "scanUrl": null}, {"id": 21, "aba": "FLUXO", "data": "2022-09-01", "documento": "OFÍCIO SECAD N°710/2021", "numeroProcesso": "", "emissor": "PROCURADORIA GERAL DO MUNÍCIPIO", "assunto": "REQUERIMENTO ALTERAÇÃO NOMENCLATURA DE FUNÇÃO", "responsavel": "GERENTE GEORGE VIEIRA", "situacao": "ARQUIVADO", "scanUrl": null}, {"id": 22, "aba": "FLUXO", "data": "2022-09-01", "documento": "ATA", "numeroProcesso": "", "emissor": "SECRETARIA DE EDUCAÇÃO", "assunto": "ATA ", "responsavel": "GERENTE GEORGE VIEIRA", "situacao": "ARQUIVADO", "scanUrl": null}, {"id": 23, "aba": "FLUXO", "data": "2022-09-01", "documento": "OFÍCIO N° 01/2022", "numeroProcesso": "", "emissor": "JOELMA ISÍDIO ", "assunto": "SITUAÇÃO DO ALUNO RAWAN HENRIQUE", "responsavel": "GERENTE GEORGE VIEIRA", "situacao": "ARQUIVADO", "scanUrl": null}, {"id": 24, "aba": "FLUXO", "data": "2022-09-01", "documento": "REQUERIMENTO DE ALMIRA CHAGAS", "numeroProcesso": "", "emissor": "INSPETORA ALMIRA CHAGAS", "assunto": "REQUERIMENTO DE DISCRIMINAÇÃO NO CONTRA-CHEQUE", "responsavel": "GERENTE GEORGE VIEIRA", "situacao": "ARQUIVADO", "scanUrl": null}, {"id": 25, "aba": "FLUXO", "data": "2022-09-13", "documento": "REQUERIMENTO GERAL", "numeroProcesso": "", "emissor": "GUSTAVO CLAUDINO", "assunto": "ABONO DE FALTA À FORMAÇÃO CONTINUADA", "responsavel": "GEORGE VIEIRA", "situacao": "SEGUIU PARA GERÊNCIA PEDAGÓGICA", "scanUrl": null}];
+
+let processos = [];
+let editId = null;
+let scanForId = null;
+let pendingScanUrl = null;
+let sortField = 'data';
+let sortDir = 'desc';
+let streamRef = null;
+let facing = 'environment';
+let abaFiltro = '';
+
+// ── FIREBASE ───────────────────────────────────────────────
+async function fbGet() {
+  const res = await fetch(FIREBASE_URL + '/processos.json');
+  const data = await res.json();
+  if (!data) return [];
+  return Object.values(data);
+}
+
+async function fbSet(lista) {
+  const obj = {};
+  lista.forEach(p => { obj[p.id] = p; });
+  await fetch(FIREBASE_URL + '/processos.json', {
+    method: 'PUT',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify(obj)
+  });
+}
+
+async function carregarDoDrive() {
+  try {
+    const lista = await fbGet();
+    if (lista && lista.length > 0) {
+      processos = lista;
+      localStorage.setItem(KEY, JSON.stringify(processos));
+      renderList();
+      document.getElementById('sync-ok').style.display = 'inline';
+    } else if (processos.length > 0) {
+      await fbSet(processos);
+      document.getElementById('sync-ok').style.display = 'inline';
+    }
+  } catch(e) {
+    console.log('Firebase err:', e);
+  }
+}
+
+async function salvarNoDrive() {
+  try {
+    await fbSet(processos);
+    document.getElementById('sync-ok').style.display = 'inline';
+  } catch(e) {
+    console.log('Firebase save err:', e);
+  }
+}
+
+// ── STORAGE ────────────────────────────────────────────────
+function salvar() {
+  localStorage.setItem(KEY, JSON.stringify(processos));
+  salvarNoDrive();
+}
+
+function load() {
+  try {
+    const saved = localStorage.getItem(KEY);
+    processos = saved ? JSON.parse(saved) : [];
+    if (!processos.length) {
+      processos = DADOS_INICIAIS;
+      localStorage.setItem(KEY, JSON.stringify(processos));
+    }
+  } catch(e) { processos = DADOS_INICIAIS; }
+  renderList();
+  carregarDoDrive();
+  setInterval(carregarDoDrive, 30000);
+}
+
+// ── STATUS COLORS ──────────────────────────────────────────
+const SC = {'EM ANÁLISE':'#3b82f6','CONCLUÍDO':'#10b981','ARQUIVADO':'#6b7280','PENDENTE':'#ef4444','ANDAMENTO':'#f59e0b','ENCAMINHADO':'#f59e0b'};
+function sColor(s) { for(const[k,v]of Object.entries(SC)) if(String(s).toUpperCase().includes(k)) return v; return '#8b5cf6'; }
+
+// ── SORT / FILTER ──────────────────────────────────────────
+function sort(f) { sortField===f ? sortDir=sortDir==='asc'?'desc':'asc' : (sortField=f,sortDir='asc'); renderList(); }
+function setAba(a) {
+  abaFiltro=a;
+  document.querySelectorAll('.filter-chip').forEach(c=>c.classList.remove('active'));
+  document.getElementById('aba-'+(a||'all')).classList.add('active');
+  renderList();
+}
+function filtered() {
+  const q = document.getElementById('search').value.toLowerCase();
+  return processos
+    .filter(p=>!abaFiltro||p.aba===abaFiltro)
+    .filter(p=>Object.values(p).some(v=>String(v||'').toLowerCase().includes(q)))
+    .sort((a,b)=>{ const va=String(a[sortField]||''),vb=String(b[sortField]||''); return sortDir==='asc'?va.localeCompare(vb):vb.localeCompare(va); });
+}
+
+// ── RENDER ─────────────────────────────────────────────────
+function renderList() {
+  const list = filtered();
+  document.getElementById('stat-total').textContent = processos.length;
+  document.getElementById('stat-vis').textContent = list.length;
+  document.getElementById('stat-scan').textContent = processos.filter(p=>p.scanUrl).length;
+  document.getElementById('empty').style.display = list.length?'none':'block';
+
+  document.getElementById('tbody').innerHTML = list.map(p=>{
+    const c=sColor(p.situacao||'');
+    return `<tr>
+      <td style="white-space:nowrap">${p.data||''}</td>
+      <td><span style="color:#93c5fd">${p.documento||''}</span><span class="aba-tag">${p.aba||''}</span>${p.scanUrl?'📎':''}</td>
+      <td>${p.numeroProcesso||''}</td>
+      <td>${p.emissor||''}</td>
+      <td class="td-clip" title="${esc(p.assunto||'')}">${p.assunto||''}</td>
+      <td>${p.responsavel||''}</td>
+      <td><span class="badge" style="background:${c}22;color:${c};border:1px solid ${c}44">${p.situacao||''}</span></td>
+      <td style="white-space:nowrap">
+        <button class="btn-sm" style="background:#3b82f622;color:#3b82f6;border:1px solid #3b82f644" onclick="viewP(${p.id})">Ver</button>
+        <button class="btn-sm" style="background:#c9a84c22;color:#c9a84c;border:1px solid #c9a84c44" onclick="openForm(${p.id})">Editar</button>
+        <button class="btn-sm" style="background:#10b98122;color:#10b981;border:1px solid #10b98144" onclick="openScanner(${p.id})">📷</button>
+        <button class="btn-sm" style="background:#ef444422;color:#ef4444;border:1px solid #ef444444" onclick="del(${p.id})">Excluir</button>
+      </td></tr>`;
+  }).join('');
+
+  document.getElementById('cards').innerHTML = list.map(p=>{
+    const c=sColor(p.situacao||'');
+    return `<div class="card">
+      <div class="card-title">${p.numeroProcesso||p.documento||'—'} <span class="aba-tag">${p.aba||''}</span>${p.scanUrl?' 📎':''}</div>
+      <div class="card-row"><span class="card-label">Documento</span><span style="color:#93c5fd">${p.documento||'—'}</span></div>
+      <div class="card-row"><span class="card-label">Data</span><span>${p.data||'—'}</span></div>
+      <div class="card-row"><span class="card-label">Emissor</span><span>${p.emissor||'—'}</span></div>
+      <div class="card-row"><span class="card-label">Assunto</span><span>${p.assunto||'—'}</span></div>
+      <div class="card-row"><span class="card-label">Responsável</span><span>${p.responsavel||'—'}</span></div>
+      <div class="card-row"><span class="card-label">Situação</span><span class="badge" style="background:${c}22;color:${c};border:1px solid ${c}44">${p.situacao||'—'}</span></div>
+      <div class="card-actions">
+        <button class="btn-sm" style="background:#3b82f622;color:#3b82f6;border:1px solid #3b82f644" onclick="viewP(${p.id})">Ver</button>
+        <button class="btn-sm" style="background:#c9a84c22;color:#c9a84c;border:1px solid #c9a84c44" onclick="openForm(${p.id})">Editar</button>
+        <button class="btn-sm" style="background:#10b98122;color:#10b981;border:1px solid #10b98144" onclick="openScanner(${p.id})">📷</button>
+        <button class="btn-sm" style="background:#ef444422;color:#ef4444;border:1px solid #ef444444" onclick="del(${p.id})">Excluir</button>
+      </div></div>`;
+  }).join('');
+}
+function esc(s){return String(s).replace(/"/g,'&quot;')}
+
+// ── FORM ───────────────────────────────────────────────────
+function openForm(id) {
+  editId=id||null;
+  const p=id?processos.find(x=>x.id===id):null;
+  document.getElementById('modal-title').textContent=id?'Editar Processo':'Novo Processo';
+  document.getElementById('f-data').value=p?.data||'';
+  document.getElementById('f-documento').value=p?.documento||'';
+  document.getElementById('f-numeroProcesso').value=p?.numeroProcesso||'';
+  document.getElementById('f-responsavel').value=p?.responsavel||'';
+  document.getElementById('f-emissor').value=p?.emissor||'';
+  document.getElementById('f-assunto').value=p?.assunto||'';
+  document.getElementById('f-aba').value=p?.aba||'2022';
+  document.getElementById('f-situacao').value=p?.situacao||'';
+  document.querySelectorAll('.chip').forEach(c=>c.classList.toggle('active',c.textContent===(p?.situacao||'')));
+  const url=pendingScanUrl||p?.scanUrl;
+  const badge=document.getElementById('scan-badge');
+  if(url){badge.style.display='flex';document.getElementById('scan-thumb').src=url;}
+  else badge.style.display='none';
+  document.getElementById('modal-form').style.display='flex';
+  closeView();
+}
+function closeForm(){document.getElementById('modal-form').style.display='none';pendingScanUrl=null;editId=null;}
+function setChip(v){document.getElementById('f-situacao').value=v;document.querySelectorAll('.chip').forEach(c=>c.classList.toggle('active',c.textContent===v));}
+function saveForm(){
+  const ass=document.getElementById('f-assunto').value.trim();
+  if(!ass){toast('⚠ Preencha o Assunto');return;}
+  const d={data:document.getElementById('f-data').value.trim(),documento:document.getElementById('f-documento').value.trim(),numeroProcesso:document.getElementById('f-numeroProcesso').value.trim(),emissor:document.getElementById('f-emissor').value.trim(),assunto:ass,responsavel:document.getElementById('f-responsavel').value.trim(),situacao:document.getElementById('f-situacao').value.trim(),aba:document.getElementById('f-aba').value};
+  if(editId){
+    const idx=processos.findIndex(p=>p.id===editId);
+    if(idx!==-1){processos[idx]={...processos[idx],...d};if(pendingScanUrl)processos[idx].scanUrl=pendingScanUrl;}
+  } else {
+    processos.push({id:Date.now(),...d,scanUrl:pendingScanUrl||null});
+  }
+  salvar();renderList();closeForm();toast('✓ Salvo!');
+}
+
+// ── VIEW ───────────────────────────────────────────────────
+function viewP(id){
+  const p=processos.find(x=>x.id===id);if(!p)return;
+  const c=sColor(p.situacao||'');
+  const fields=[['Aba',p.aba],['Data',p.data],['Documento',p.documento],['Nº Processo',p.numeroProcesso],['Emissor',p.emissor],['Assunto',p.assunto],['Responsável',p.responsavel],['Situação',p.situacao]];
+  let html='<div style="display:flex;gap:20px;flex-wrap:wrap"><div style="flex:1;min-width:180px">';
+  fields.forEach(([l,v])=>html+=`<div class="detail-row"><span class="detail-label">${l}</span><span style="${l==='Situação'?'color:'+c:''}">${v||'—'}</span></div>`);
+  html+='</div>';
+  if(p.scanUrl)html+=`<div style="text-align:center"><div style="font-size:10px;color:var(--muted);margin-bottom:8px;text-transform:uppercase;letter-spacing:1px">Documento</div><img src="${p.scanUrl}" style="max-width:160px;max-height:220px;border-radius:6px;border:1px solid var(--border);object-fit:contain"><div><a href="${p.scanUrl}" download="processo_${p.id}.jpg" style="color:var(--gold);font-size:11px;text-decoration:none;margin-top:6px;display:inline-block">⬇ Baixar</a></div></div>`;
+  html+='</div>';
+  document.getElementById('view-content').innerHTML=html;
+  document.getElementById('view-actions').innerHTML=`<button class="btn btn-outline" style="color:#1a3a7a;border-color:#1a3a7a" onclick="imprimirFicha(${p.id})">🖨 Imprimir</button><button class="btn btn-outline" style="color:var(--green);border-color:var(--green)" onclick="openScanner(${p.id});closeView()">📷 ${p.scanUrl?'Redigitalizar':'Escanear'}</button><button class="btn btn-outline" onclick="openForm(${p.id})">Editar</button><button class="btn btn-outline" onclick="closeView()">Fechar</button>`;
+  document.getElementById('modal-view').style.display='flex';
+}
+function closeView(){document.getElementById('modal-view').style.display='none';}
+function imprimirFicha(id){window.open('ficha_impressao.html?id='+id,'_blank');}
+
+// ── DELETE ─────────────────────────────────────────────────
+function del(id){
+  if(!confirm('Confirma exclusão?'))return;
+  processos=processos.filter(p=>p.id!==id);
+  salvar();renderList();closeView();toast('🗑 Excluído');
+}
+
+// ── SCANNER ────────────────────────────────────────────────
+async function openScanner(id){
+  scanForId=id;pendingScanUrl=null;
+  document.getElementById('scanner-overlay').classList.add('active');
+  document.getElementById('cam-phase').style.display='flex';
+  document.getElementById('prev-phase').style.display='none';
+  document.getElementById('cam-error').style.display='none';
+  await startCam(facing);
+}
+async function startCam(f){
+  if(streamRef)streamRef.getTracks().forEach(t=>t.stop());
+  try{streamRef=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:f},width:{ideal:1920},height:{ideal:1080}},audio:false});const v=document.getElementById('video');v.srcObject=streamRef;await v.play();}
+  catch{document.getElementById('cam-error').style.display='block';}
+}
+function flipCam(){facing=facing==='environment'?'user':'environment';startCam(facing);}
+function capturePhoto(){
+  const v=document.getElementById('video'),c=document.getElementById('canvas');
+  c.width=v.videoWidth;c.height=v.videoHeight;
+  const ctx=c.getContext('2d');ctx.drawImage(v,0,0);
+  showPreview(c.toDataURL('image/jpeg',0.85));
+  streamRef?.getTracks().forEach(t=>t.stop());
+}
+function handleFile(e){const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=ev=>showPreview(ev.target.result);r.readAsDataURL(f);}
+function showPreview(url){document.getElementById('preview-img').src=url;document.getElementById('cam-phase').style.display='none';document.getElementById('prev-phase').style.display='flex';}
+function retake(){document.getElementById('cam-phase').style.display='flex';document.getElementById('prev-phase').style.display='none';startCam(facing);}
+function confirmScan(){
+  const url=document.getElementById('preview-img').src;
+  pendingScanUrl=url;closeScanner();
+  if(scanForId==='new'){openForm();}
+  else{const idx=processos.findIndex(p=>p.id===scanForId);if(idx!==-1){processos[idx].scanUrl=url;salvar();renderList();toast('📎 Escaneamento salvo!');}}
+}
+function closeScanner(){streamRef?.getTracks().forEach(t=>t.stop());streamRef=null;document.getElementById('scanner-overlay').classList.remove('active');}
+
+// ── TOAST ──────────────────────────────────────────────────
+function toast(msg){const el=document.getElementById('toast');el.textContent=msg;el.classList.add('show');setTimeout(()=>el.classList.remove('show'),2500);}
+
+// ── INIT ───────────────────────────────────────────────────
+load();
+</script>
+</body>
+</html>
